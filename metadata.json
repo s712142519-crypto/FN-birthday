@@ -1,0 +1,6 @@
+{
+  "name": "Romantic Birthday Surprise",
+  "description": "An elegant, romantic birthday website featuring a secure lock, countdown timer, interactive balloons mini-game, lofi music player, photo memories carousel, and video player.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

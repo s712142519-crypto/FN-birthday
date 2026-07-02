@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Google AI Studio App</title>
+    <script>
+      // Gracefully prevent cross-origin third-party script noise from triggering error popups
+      window.addEventListener('error', function(event) {
+        if (event.message === 'Script error.' || !event.filename || event.filename.indexOf(window.location.origin) === -1) {
+          event.stopImmediatePropagation();
+          event.preventDefault();
+          return true;
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', function(event) {
+        const reason = event.reason;
+        if (!reason || (reason.message && reason.message.includes('Script error')) || String(reason).includes('Script error')) {
+          event.stopImmediatePropagation();
+          event.preventDefault();
+          return true;
+        }
+      }, true);
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
