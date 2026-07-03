@@ -406,6 +406,7 @@ export default function PhotosSection({ onBack }: PhotosSectionProps) {
         .play()
         .then(() => {
           setIsCinemaPlaying(true);
+          tryRequestFullscreen(); // Automatically request full screen!
         })
         .catch((err) => {
           console.log(
@@ -547,6 +548,28 @@ export default function PhotosSection({ onBack }: PhotosSectionProps) {
     };
   }, [isRotatePromptActive]);
 
+  // Cross-browser helper to trigger native full-screen video playback
+  const tryRequestFullscreen = async () => {
+    const videoEl = fullVideoRef.current;
+    if (videoEl) {
+      try {
+        if (videoEl.requestFullscreen) {
+          await videoEl.requestFullscreen();
+        } else if ((videoEl as any).webkitEnterFullscreen) {
+          (videoEl as any).webkitEnterFullscreen();
+        } else if ((videoEl as any).webkitRequestFullscreen) {
+          await (videoEl as any).webkitRequestFullscreen();
+        } else if ((videoEl as any).mozRequestFullScreen) {
+          await (videoEl as any).mozRequestFullScreen();
+        } else if ((videoEl as any).msRequestFullscreen) {
+          await (videoEl as any).msRequestFullscreen();
+        }
+      } catch (err) {
+        console.log("Native fullscreen request rejected by browser policies:", err);
+      }
+    }
+  };
+
   // Suspense transition black screen and countdown 5-1 using smooth setInterval
   const triggerSpecialVideoReveal = () => {
     setIsBlackScreenActive(true);
@@ -574,6 +597,7 @@ export default function PhotosSection({ onBack }: PhotosSectionProps) {
               .play()
               .then(() => {
                 setIsCinemaPlaying(true);
+                tryRequestFullscreen(); // Automatically request full screen!
               })
               .catch((err) => {
                 console.log(
@@ -586,6 +610,7 @@ export default function PhotosSection({ onBack }: PhotosSectionProps) {
                     .play()
                     .then(() => {
                       setIsCinemaPlaying(true);
+                      tryRequestFullscreen(); // Automatically request full screen!
                     })
                     .catch((e) => {
                       console.log("Muted autoplay failed:", e);
@@ -1024,9 +1049,11 @@ export default function PhotosSection({ onBack }: PhotosSectionProps) {
                 src={fullVideoSrc}
                 onPlay={() => {
                   setIsCinemaPlaying(true);
+                  tryRequestFullscreen(); // Attempt auto fullscreen on play!
                 }}
                 onPlaying={() => {
                   setIsCinemaPlaying(true);
+                  tryRequestFullscreen(); // Attempt auto fullscreen on playing!
                 }}
                 onEnded={() => {
                   setIsVideoFinished(true);
@@ -1051,6 +1078,7 @@ export default function PhotosSection({ onBack }: PhotosSectionProps) {
                   onClick={() => {
                     if (fullVideoRef.current) {
                       fullVideoRef.current.muted = false;
+                      tryRequestFullscreen(); // Try entering fullscreen on click!
                       fullVideoRef.current
                         .play()
                         .then(() => {
@@ -1079,17 +1107,29 @@ export default function PhotosSection({ onBack }: PhotosSectionProps) {
               )}
             </AnimatePresence>
 
-            {/* Exit fullscreen button */}
-            <button
-              onClick={() => {
-                setIsFullscreenVideoActive(false);
-                setIsVideoFinished(false);
-                setIsCinemaPlaying(false);
-              }}
-              className="absolute top-4 right-4 z-[1000] px-4.5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold cursor-pointer transition-all hover:scale-105 active:scale-95"
-            >
-              Exit Cinema
-            </button>
+            {/* Top Control Bar with Full Screen and Exit Buttons */}
+            <div className="absolute top-4 left-4 right-4 z-[1000] flex justify-between items-center pointer-events-auto">
+              {/* Maximize / Native Full Screen Toggle Button */}
+              <button
+                onClick={() => tryRequestFullscreen()}
+                className="px-4.5 py-2.5 rounded-full bg-purple-600/90 hover:bg-purple-500 border border-purple-500/30 text-white text-xs font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 shadow-lg shadow-purple-950/40"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>Full Screen</span>
+              </button>
+
+              {/* Exit cinema button */}
+              <button
+                onClick={() => {
+                  setIsFullscreenVideoActive(false);
+                  setIsVideoFinished(false);
+                  setIsCinemaPlaying(false);
+                }}
+                className="px-4.5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-md"
+              >
+                Exit Cinema
+              </button>
+            </div>
 
             {/* FINISHED VIDEO OVERLAY: Displays "Once More, Happy Birthday My Love! ❤️" as exact text reveal */}
             <AnimatePresence>

@@ -18,7 +18,7 @@ export default function CountdownScreen({ onUnlock }: CountdownScreenProps) {
   
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState(false);
-  const [showPasswordBox, setShowPasswordBox] = useState(false);
+  const [showPasswordBox, setShowPasswordBox] = useState(true);
   const [isCrafting, setIsCrafting] = useState(false);
   const [craftingSeconds, setCraftingSeconds] = useState(5);
 
@@ -167,75 +167,15 @@ export default function CountdownScreen({ onUnlock }: CountdownScreenProps) {
           A Beautiful Surprise Awaits
         </h1>
         <p 
-          className="font-sans text-purple-200/80 mb-4 max-w-sm leading-relaxed px-4 text-center"
+          className="font-sans text-purple-200/80 mb-6 max-w-sm leading-relaxed px-4 text-center animate-pulse"
           style={{ fontSize: "clamp(0.85rem, 3.5vw, 0.875rem)" }}
         >
-          Something extremely magical is prepared for <span className="font-bold text-fuchsia-400">{BIRTHDAY_CONFIG.recipientName}</span>. T-minus...
+          Something extremely magical is prepared for <span className="font-bold text-fuchsia-400">{BIRTHDAY_CONFIG.recipientName}</span>. Enter the passcode below to unlock...
         </p>
 
-        {/* Interactive Custom Date Selector Button */}
-        <div className="mb-6 flex flex-col items-center">
-          <button
-            onClick={() => setIsEditingDate(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-purple-950/60 hover:bg-purple-900/60 border border-purple-500/20 hover:border-purple-500/40 text-purple-300 hover:text-white transition-all text-xs font-semibold cursor-pointer shadow-lg hover:shadow-purple-950/50 hover:scale-105 active:scale-95"
-          >
-            <Calendar className="w-3.5 h-3.5 text-fuchsia-400 animate-pulse" />
-            <span>
-              Target: {(() => {
-                const dateObj = new Date(birthdayDateStr);
-                return isNaN(dateObj.getTime())
-                  ? "Select Date"
-                  : dateObj.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-              })()} at 12:00 AM
-            </span>
-            <Edit2 className="w-3 h-3 text-purple-400 ml-1 hover:text-fuchsia-400" />
-          </button>
-        </div>
-
-        {/* Countdown Grid */}
-        <div id="countdown-grid" className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4 w-full max-w-md mb-10 px-4 sm:px-2">
-          {[
-            { label: "DAYS", value: timeLeft.days },
-            { label: "HOURS", value: timeLeft.hours },
-            { label: "MINS", value: timeLeft.minutes },
-            { label: "SECS", value: timeLeft.seconds },
-          ].map((item, index) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-purple-950/40 backdrop-blur-md border border-purple-500/20 rounded-2xl shadow-xl flex flex-col items-center justify-center p-3"
-              style={{
-                minWidth: "80px",
-                minHeight: "80px",
-              }}
-            >
-              <span className="font-mono font-bold text-fuchsia-300 tracking-tight drop-shadow-[0_0_8px_rgba(240,70,160,0.4)] text-[2rem] sm:text-3xl md:text-4xl leading-none">
-                {String(item.value).padStart(2, "0")}
-              </span>
-              <span className="font-sans font-semibold tracking-wider text-purple-400 mt-1.5 text-[0.6rem] sm:text-[10px] md:text-xs">
-                {item.label}
-              </span>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Action Controls Toggle */}
+        {/* Action Controls Toggle - Passcode gate is directly rendered */}
         <AnimatePresence mode="wait">
-          {!showPasswordBox ? (
-            <motion.button
-              key="unlock-btn"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              onClick={() => setShowPasswordBox(true)}
-              className="w-[90%] sm:w-auto px-8 py-4 sm:px-6 sm:py-3 cursor-pointer bg-purple-900/30 hover:bg-purple-900/60 text-purple-200 font-semibold border border-purple-500/30 rounded-full shadow-lg text-sm transition-all duration-300 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 min-h-[44px]"
-            >
-              <KeyRound className="w-4 h-4 text-fuchsia-400" />
-              Have an Unlock Passcode?
-            </motion.button>
-          ) : (
+          {showPasswordBox && (
             <motion.div
               key="password-gate-new"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -265,9 +205,7 @@ export default function CountdownScreen({ onUnlock }: CountdownScreenProps) {
                   </div>
 
                   <p className="font-serif text-[13px] text-purple-100 max-w-[220px] leading-relaxed italic">
-                    {timeLeft.isOver 
-                      ? "Happy Birthday! Midnight has officially struck! Please enter the passcode to begin your surprise journey..." 
-                      : "Every sweet candle lit represents a beautiful story we've lived. Input the lock code to read my memories..."}
+                    Every sweet candle lit represents a beautiful story we've lived. Input the lock code to read my memories...
                   </p>
                   <p className="font-mono text-[9px] text-fuchsia-400 mt-2 font-bold tracking-wider uppercase">
                     {BIRTHDAY_CONFIG.passwordHint}
@@ -339,20 +277,18 @@ export default function CountdownScreen({ onUnlock }: CountdownScreenProps) {
                     </div>
                   </div>
 
-                  {/* Keyboard actions: Cancel, Backspace, Unlock */}
+                  {/* Keyboard actions: Backspace, Unlock */}
                   <div className="w-full flex gap-2">
                     <button
                       type="button"
                       onClick={() => {
                         if (passwordInput.length > 0) {
                           setPasswordInput((prev) => prev.slice(0, -1));
-                        } else {
-                          setShowPasswordBox(false);
                         }
                       }}
                       className="flex-1 py-2 text-purple-300 hover:text-white border border-purple-500/25 rounded-xl text-xs font-semibold hover:bg-purple-950/30 cursor-pointer transition-colors"
                     >
-                      {passwordInput.length > 0 ? "Clear" : "Cancel"}
+                      Backspace
                     </button>
 
                      <button
