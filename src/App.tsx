@@ -17,29 +17,29 @@ import { motion, AnimatePresence } from "motion/react";
 
 type ViewState = "countdown" | "intro-video" | "intro" | "hub" | "music" | "message" | "photos";
 
-// Safe sessionStorage fallback to prevent security crashes in sandboxed iframes
-const safeSessionStorageStore: Record<string, string> = {};
+// Safe localStorage fallback to prevent security crashes in sandboxed iframes
+const safeLocalStorageStore: Record<string, string> = {};
 
-const safeSessionStorage = {
+const safeLocalStorage = {
   getItem: (key: string): string | null => {
     try {
-      return sessionStorage.getItem(key);
+      return localStorage.getItem(key);
     } catch {
-      return safeSessionStorageStore[key] || null;
+      return safeLocalStorageStore[key] || null;
     }
   },
   setItem: (key: string, value: string): void => {
     try {
-      sessionStorage.setItem(key, value);
+      localStorage.setItem(key, value);
     } catch {
-      safeSessionStorageStore[key] = value;
+      safeLocalStorageStore[key] = value;
     }
   },
   removeItem: (key: string): void => {
     try {
-      sessionStorage.removeItem(key);
+      localStorage.removeItem(key);
     } catch {
-      delete safeSessionStorageStore[key];
+      delete safeLocalStorageStore[key];
     }
   }
 };
@@ -48,52 +48,34 @@ export default function App() {
   const [view, setView] = useState<ViewState>("countdown");
   const [hasUnlocked, setHasUnlocked] = useState(false);
 
-  // Check on mount if we've already reached midnight of the birthday date to unlock automatically
+  // Check on mount if the session is already unlocked
   useEffect(() => {
-    const checkTargetDateReached = () => {
-      const sessionUnlocked = safeSessionStorage.getItem("romantic_app_session_unlocked");
+    const checkSessionStatus = () => {
+      const sessionUnlocked = safeLocalStorage.getItem("romantic_app_passcode_unlocked_v3");
       if (sessionUnlocked === "true") {
-        setHasUnlocked(true);
-        // Do NOT change view if it's already one of the inner views
-        return;
-      }
-
-      const targetTime = new Date(BIRTHDAY_CONFIG.birthdayDate).getTime();
-      const currentTime = new Date().getTime();
-      
-      if (currentTime >= targetTime) {
-        safeSessionStorage.setItem("romantic_app_session_unlocked", "true");
         setHasUnlocked(true);
         setView((currentView) => {
           if (currentView === "countdown") {
-            return "intro";
+            return "hub";
           }
           return currentView;
         });
       } else {
-        if (sessionUnlocked === "true") {
-          setHasUnlocked(true);
-        } else {
-          setView("countdown");
-        }
+        setView("countdown");
       }
     };
 
-    checkTargetDateReached();
-    
-    // Check periodically in case time naturally rolls over while viewing the tab
-    const interval = setInterval(checkTargetDateReached, 10000);
-    return () => clearInterval(interval);
+    checkSessionStatus();
   }, []);
 
   const handleUnlock = () => {
-    safeSessionStorage.setItem("romantic_app_session_unlocked", "true");
+    safeLocalStorage.setItem("romantic_app_passcode_unlocked_v3", "true");
     setHasUnlocked(true);
     setView("intro-video");
   };
 
   const handleResetLock = () => {
-    safeSessionStorage.removeItem("romantic_app_session_unlocked");
+    safeLocalStorage.removeItem("romantic_app_passcode_unlocked_v3");
     setHasUnlocked(false);
     setView("countdown");
   };
