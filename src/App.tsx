@@ -44,6 +44,33 @@ const safeLocalStorage = {
   }
 };
 
+// Safe sessionStorage fallback to prevent security crashes in sandboxed iframes
+const safeSessionStorageStore: Record<string, string> = {};
+
+const safeSessionStorage = {
+  getItem: (key: string): string | null => {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return safeSessionStorageStore[key] || null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {
+      safeSessionStorageStore[key] = value;
+    }
+  },
+  removeItem: (key: string): void => {
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      delete safeSessionStorageStore[key];
+    }
+  }
+};
+
 export default function App() {
   const [view, setView] = useState<ViewState>("countdown");
   const [hasUnlocked, setHasUnlocked] = useState(false);
@@ -51,11 +78,15 @@ export default function App() {
   // Check on mount if the session is already unlocked
   useEffect(() => {
     const checkSessionStatus = () => {
-      const sessionUnlocked = safeLocalStorage.getItem("romantic_app_passcode_unlocked_v3");
+      const sessionUnlocked = safeSessionStorage.getItem("romantic_app_passcode_unlocked_v4");
       if (sessionUnlocked === "true") {
         setHasUnlocked(true);
         setView((currentView) => {
           if (currentView === "countdown") {
+            const savedView = safeSessionStorage.getItem("romantic_app_current_view");
+            if (savedView && savedView !== "countdown") {
+              return savedView as ViewState;
+            }
             return "hub";
           }
           return currentView;
@@ -68,17 +99,49 @@ export default function App() {
     checkSessionStatus();
   }, []);
 
+  // Keep the current view updated in sessionStorage so page refreshes don't lose the user's progress
+  useEffect(() => {
+    if (view !== "countdown") {
+      safeSessionStorage.setItem("romantic_app_current_view", view);
+    }
+  }, [view]);
+
   const handleUnlock = () => {
-    safeLocalStorage.setItem("romantic_app_passcode_unlocked_v3", "true");
+    safeSessionStorage.setItem("romantic_app_passcode_unlocked_v4", "true");
     setHasUnlocked(true);
     setView("intro-video");
   };
 
   const handleResetLock = () => {
-    safeLocalStorage.removeItem("romantic_app_passcode_unlocked_v3");
+    safeSessionStorage.removeItem("romantic_app_passcode_unlocked_v4");
+    safeSessionStorage.removeItem("romantic_app_current_view");
     setHasUnlocked(false);
     setView("countdown");
   };
+
+  // Visibility and focus lock: If the user leaves the tab for more than 15 seconds, auto-lock the app
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        // Record timestamp of when they left the website
+        safeSessionStorage.setItem("romantic_app_last_left_time", Date.now().toString());
+      } else if (document.visibilityState === "visible") {
+        // Check if they've been gone for more than 15 seconds
+        const lastLeftStr = safeSessionStorage.getItem("romantic_app_last_left_time");
+        if (lastLeftStr) {
+          const lastLeft = parseInt(lastLeftStr, 10);
+          if (!isNaN(lastLeft) && Date.now() - lastLeft > 15000) {
+            handleResetLock();
+          }
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   return (
     <div className={`min-h-screen relative w-full overflow-x-hidden ${BIRTHDAY_CONFIG.aesthetic.backgroundColorClass}`}>

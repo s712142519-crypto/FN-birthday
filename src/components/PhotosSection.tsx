@@ -1112,6 +1112,7 @@ export default function PhotosSection({ onBack }: PhotosSectionProps) {
                   setIsFullscreenVideoActive(false);
                   setIsVideoFinished(false);
                   setIsCinemaPlaying(false);
+                  onBack();
                 }}
                 className="px-4.5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-md"
               >
@@ -1165,10 +1166,11 @@ export default function PhotosSection({ onBack }: PhotosSectionProps) {
                         setIsFullscreenVideoActive(false);
                         setIsVideoFinished(false);
                         setIsCinemaPlaying(false);
+                        onBack();
                       }}
                       className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-xs font-bold hover:scale-103 active:scale-97 cursor-pointer transition-all uppercase tracking-widest"
                     >
-                      Return to Gallery
+                      Return to Hub
                     </button>
                   </div>
                 </motion.div>
