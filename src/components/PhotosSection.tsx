@@ -626,24 +626,12 @@ export default function PhotosSection({ onBack }: PhotosSectionProps) {
     }, 1000); // Perfect, exact 1-second interval with no drift!
   };
 
-  // Automatic cinema video launch when both photos and message have been viewed
+  // Set photos section as seen on mount
   useEffect(() => {
     try {
       localStorage.setItem("photos_seen", "true");
     } catch (e) {
       console.error(e);
-    }
-
-    const messageSeen = localStorage.getItem("message_seen") === "true";
-    const autoTriggered =
-      sessionStorage.getItem("auto_video_triggered") === "true";
-
-    if (messageSeen && !autoTriggered) {
-      sessionStorage.setItem("auto_video_triggered", "true");
-      const timer = setTimeout(() => {
-        triggerSpecialVideoReveal();
-      }, 3500);
-      return () => clearTimeout(timer);
     }
   }, []);
 
