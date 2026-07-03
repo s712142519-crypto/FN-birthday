@@ -72,32 +72,9 @@ const safeSessionStorage = {
 };
 
 export default function App() {
-  const [view, setView] = useState<ViewState>("countdown");
   const [hasUnlocked, setHasUnlocked] = useState(false);
 
-  // Check on mount if the session is already unlocked
-  useEffect(() => {
-    const checkSessionStatus = () => {
-      const sessionUnlocked = safeSessionStorage.getItem("romantic_app_passcode_unlocked_v4");
-      if (sessionUnlocked === "true") {
-        setHasUnlocked(true);
-        setView((currentView) => {
-          if (currentView === "countdown") {
-            const savedView = safeSessionStorage.getItem("romantic_app_current_view");
-            if (savedView && savedView !== "countdown") {
-              return savedView as ViewState;
-            }
-            return "hub";
-          }
-          return currentView;
-        });
-      } else {
-        setView("countdown");
-      }
-    };
-
-    checkSessionStatus();
-  }, []);
+  const [view, setView] = useState<ViewState>("countdown");
 
   // Keep the current view updated in sessionStorage so page refreshes don't lose the user's progress
   useEffect(() => {
@@ -226,7 +203,6 @@ export default function App() {
             >
               <MessageSection 
                 onBack={() => setView("hub")} 
-                onNavigateToPhotos={() => setView("photos")}
               />
             </motion.div>
           )}

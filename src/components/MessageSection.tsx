@@ -5,48 +5,20 @@ import { motion, AnimatePresence } from "motion/react";
 
 interface MessageSectionProps {
   onBack: () => void;
-  onNavigateToPhotos: () => void;
 }
 
-export default function MessageSection({ onBack, onNavigateToPhotos }: MessageSectionProps) {
+export default function MessageSection({ onBack }: MessageSectionProps) {
   const [isSealedEnvelope, setIsSealedEnvelope] = useState(true);
-  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isSealedEnvelope) {
       try {
         localStorage.setItem("message_seen", "true");
-        
-        // Check if photos have been seen and auto-play hasn't been triggered yet
-        const photosSeen = localStorage.getItem("photos_seen") === "true";
-        const autoTriggered = sessionStorage.getItem("auto_video_triggered") === "true";
-        
-        if (photosSeen && !autoTriggered) {
-          // Set countdown starting at 5
-          setRedirectCountdown(5);
-        }
       } catch (e) {
         console.error(e);
       }
     }
   }, [isSealedEnvelope]);
-
-  // Countdown timer effect
-  useEffect(() => {
-    if (redirectCountdown === null) return;
-    
-    if (redirectCountdown === 0) {
-      sessionStorage.setItem("auto_video_triggered", "true");
-      onNavigateToPhotos();
-      return;
-    }
-    
-    const timer = setTimeout(() => {
-      setRedirectCountdown(prev => (prev !== null ? prev - 1 : null));
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, [redirectCountdown, onNavigateToPhotos]);
 
   // Web Audio Synth for satisfying premium wax seal "breaking" or "pop" sound effect when breaking the seal
   const playPopSound = () => {
@@ -205,39 +177,6 @@ export default function MessageSection({ onBack, onNavigateToPhotos }: MessageSe
                   Return to Hub
                 </button>
               </div>
-
-              {/* Countdown Overlay for Redirecting to Cinema */}
-              <AnimatePresence>
-                {redirectCountdown !== null && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 bg-[#070110]/95 flex flex-col items-center justify-center p-6 text-center z-50 rounded-3xl backdrop-blur-md"
-                  >
-                    <motion.div
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ repeat: Infinity, duration: 1.5 }}
-                      className="w-16 h-16 bg-fuchsia-500/10 border border-fuchsia-500/30 rounded-full flex items-center justify-center mb-6 text-fuchsia-400 shadow-lg"
-                    >
-                      <Sparkles className="w-8 h-8 text-fuchsia-400 animate-pulse" />
-                    </motion.div>
-                    
-                    <h3 className="font-serif text-xl md:text-2xl text-fuchsia-300 font-extrabold mb-2 tracking-wide">
-                      Something Magical is Beginning... ✨
-                    </h3>
-                    <p className="font-sans text-xs text-purple-200/80 max-w-xs mx-auto mb-6">
-                      You have unlocked all our precious birthday chapters! Starting your special cinematic surprise in...
-                    </p>
-                    
-                    <div className="w-20 h-20 rounded-full border-4 border-rose-500 flex items-center justify-center bg-rose-500/5 shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-                      <span className="font-sans font-black text-4xl text-rose-300">
-                        {redirectCountdown}
-                      </span>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>
