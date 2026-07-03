@@ -50,39 +50,29 @@ export default function App() {
 
   // Check on mount if we've already reached midnight of the birthday date to unlock automatically
   useEffect(() => {
-    const checkTargetDateReached = () => {
-      const sessionUnlocked = safeSessionStorage.getItem("romantic_app_session_unlocked");
-      if (sessionUnlocked === "true") {
-        setHasUnlocked(true);
-        // Do NOT change view if it's already one of the inner views
-        return;
-      }
+    const sessionUnlocked = safeSessionStorage.getItem("romantic_app_session_unlocked");
+    const targetTime = new Date(BIRTHDAY_CONFIG.birthdayDate).getTime();
+    const dateReached = Date.now() >= targetTime;
 
-      const targetTime = new Date(BIRTHDAY_CONFIG.birthdayDate).getTime();
-      const currentTime = new Date().getTime();
-      
-      if (currentTime >= targetTime) {
+    if (sessionUnlocked === "true" || dateReached) {
+      safeSessionStorage.setItem("romantic_app_session_unlocked", "true");
+      setHasUnlocked(true);
+      // Already unlocked (from before, or date passed) -> go straight to the hub,
+      // don't get stuck on the countdown screen and don't replay the intro video.
+      setView((currentView) => (currentView === "countdown" ? "hub" : currentView));
+      return; // no need for the timer once unlocked
+    }
+
+    // Not yet unlocked - keep checking every 10s in case the date rolls over live
+    const interval = setInterval(() => {
+      if (Date.now() >= targetTime) {
         safeSessionStorage.setItem("romantic_app_session_unlocked", "true");
         setHasUnlocked(true);
-        setView((currentView) => {
-          if (currentView === "countdown") {
-            return "intro";
-          }
-          return currentView;
-        });
-      } else {
-        if (sessionUnlocked === "true") {
-          setHasUnlocked(true);
-        } else {
-          setView("countdown");
-        }
+        setView((v) => (v === "countdown" ? "hub" : v));
+        clearInterval(interval);
       }
-    };
+    }, 10000);
 
-    checkTargetDateReached();
-    
-    // Check periodically in case time naturally rolls over while viewing the tab
-    const interval = setInterval(checkTargetDateReached, 10000);
     return () => clearInterval(interval);
   }, []);
 
